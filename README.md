@@ -1,22 +1,8 @@
-# ColdTrace DC
+# ColdTrace 
 
-ColdTrace DC is a software-only implementation of a distributed vaccine cold chain monitoring platform based on the architecture described in the project PDFs.
+ColdTrace is a software-only implementation of a distributed vaccine cold chain monitoring platform based on the architecture described in the project PDFs.
 
 It simulates LTAT sensor nodes, an IGD-style gateway, a cloud analytics layer, role-based dashboards, report exports, mobile operator workflows, and optional real integrations for SMS, email, and transport maps.
-
-## Recommended Project Name
-
-`ColdTrace DC`
-
-Why this name works:
-
-- `ColdTrace` clearly reflects cold chain monitoring and traceability
-- `DC` aligns with your distributed computing subject
-- it sounds formal enough for GitHub, viva, and report submission
-
-Suggested full title:
-
-`ColdTrace DC: Distributed Vaccine Cold Chain Monitoring Platform`
 
 ## Architecture
 
