@@ -230,32 +230,6 @@ Protected:
 - `GET /api/reports/export/summary.csv`
 - `GET /api/reports/export/incidents.csv`
 
-## Google Stitch Integration
-
-This repo is already structured so Stitch can redesign the frontend without rewriting the backend.
-
-See:
-
-- [docs/stitch-ui-brief.md](docs/stitch-ui-brief.md)
-
-The main rule is: preserve the existing REST contracts and plug the new UI into them.
-
-## Semester Project Talking Points
-
-When faculty asks how this qualifies as distributed computing:
-
-- LTAT nodes are simulated as independent producers of telemetry
-- the gateway behaves like an edge node with persistent local buffering
-- the cloud acts as the centralized coordination and analytics service
-- dashboards and operator surfaces act as distributed clients
-- notifications model reliable group communication
-- timestamps, message persistence, and fault tolerance are explicitly implemented
-
-## Useful Docs
-
-- [docs/architecture-mapping.md](docs/architecture-mapping.md)
-- [docs/role-matrix.md](docs/role-matrix.md)
-- [docs/stitch-ui-brief.md](docs/stitch-ui-brief.md)
 
 ## Future Upgrades
 
