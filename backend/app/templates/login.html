@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_name }} | Login</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body data-page="login">
+    <main class="auth-shell">
+      <section class="auth-panel">
+        <p class="eyebrow">{{ tagline }}</p>
+        <h1>{{ app_name }}</h1>
+        <p class="lede">Role-based login for admins, managers, supervisors, and vaccinators.</p>
+
+        <form id="login-form" class="auth-form">
+          <label>
+            Email
+            <input type="email" id="email" placeholder="manager@coldtrace.local" required />
+          </label>
+          <label>
+            Password
+            <input type="password" id="password" placeholder="Enter password" required />
+          </label>
+          <button type="submit" class="primary-btn wide-btn">Sign In</button>
+        </form>
+
+        <div id="login-error" class="error-box hidden"></div>
+
+        <div class="demo-box">
+          <strong>Demo users</strong>
+          <p>`admin@coldtrace.local` / `Admin@123`</p>
+          <p>`manager@coldtrace.local` / `Manager@123`</p>
+          <p>`supervisor@coldtrace.local` / `Supervisor@123`</p>
+          <p>`vaccinator@coldtrace.local` / `Vaccinator@123`</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/common.js"></script>
+    <script src="/static/login.js"></script>
+  </body>
+</html>

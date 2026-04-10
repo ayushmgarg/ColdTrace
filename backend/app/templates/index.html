@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_name }} | Operations Console</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body data-page="dashboard">
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">{{ tagline }}</p>
+          <h1>{{ app_name }}</h1>
+        </div>
+        <div class="topbar-actions">
+          <span id="user-pill" class="user-pill">Loading user...</span>
+          <button class="ghost-btn" id="go-operator">Mobile View</button>
+          <button class="ghost-btn" id="go-report">Reports</button>
+          <button class="ghost-btn" id="logout-btn">Logout</button>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Operations Control Room</p>
+          <h2>Live monitoring, incident response, traceability, and transport oversight</h2>
+          <p class="lede">
+            Built for Google Stitch handoff: the visual layer can change later without breaking
+            the REST contracts or the distributed system logic underneath.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <button class="primary-btn" id="download-summary">Export Summary CSV</button>
+          <button class="secondary-btn" id="download-incidents">Export Incidents CSV</button>
+        </div>
+      </section>
+
+      <section class="metrics" id="summary-cards"></section>
+
+      <section class="grid two-up">
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Presentation Analytics</h3>
+            <span class="badge">Faculty demo</span>
+          </div>
+          <div id="analytics-kpis" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Notification Delivery</h3>
+            <span class="badge">Twilio + SendGrid aware</span>
+          </div>
+          <div id="delivery-mix" class="stack"></div>
+        </article>
+      </section>
+
+      <section class="grid two-up">
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Facility Health</h3>
+            <span class="badge">Regional view</span>
+          </div>
+          <div id="facility-health" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Open Incident Mix</h3>
+            <span class="badge">Risk signals</span>
+          </div>
+          <div id="incident-mix" class="mix"></div>
+        </article>
+      </section>
+
+      <section class="grid two-up">
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Transit Map</h3>
+            <span class="badge">Mapbox ready</span>
+          </div>
+          <div id="map-status" class="subtle"></div>
+          <div id="map" class="map-shell"></div>
+          <div id="transit-list" class="stack compact-stack"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Recent Trend Points</h3>
+            <span class="badge">Telemetry window</span>
+          </div>
+          <div id="recent-points" class="stack compact-stack"></div>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Live Telemetry Feed</h3>
+            <span class="badge">Latest packets</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Device</th>
+                  <th>Facility</th>
+                  <th>Temp</th>
+                  <th>Humidity</th>
+                  <th>Battery</th>
+                  <th>Mode</th>
+                </tr>
+              </thead>
+              <tbody id="telemetry-body"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid two-up">
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Incidents</h3>
+            <span class="badge danger">Threshold breaches</span>
+          </div>
+          <div id="incidents-list" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Notification Log</h3>
+            <span class="badge">Delivery audit</span>
+          </div>
+          <div id="notification-list" class="stack"></div>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Batch Traceability</h3>
+            <span class="badge">Origin to destination</span>
+          </div>
+          <div id="batch-list" class="stack"></div>
+        </article>
+      </section>
+    </main>
+
+    <script src="/static/common.js"></script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

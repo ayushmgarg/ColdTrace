@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_name }} | Operator View</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body data-page="operator">
+    <main class="operator-shell">
+      <header class="operator-top">
+        <div>
+          <p class="eyebrow">Mobile Operator Surface</p>
+          <h1>{{ app_name }}</h1>
+        </div>
+        <div class="topbar-actions">
+          <button class="ghost-btn" id="go-dashboard">Dashboard</button>
+          <button class="ghost-btn" id="logout-btn">Logout</button>
+        </div>
+      </header>
+
+      <section class="operator-card accent-card">
+        <p class="label">Signed in as</p>
+        <strong id="operator-name">Loading...</strong>
+        <p id="operator-role" class="subtle"></p>
+      </section>
+
+      <section class="operator-grid">
+        <article class="operator-card">
+          <p class="label">Assigned Facility</p>
+          <strong id="operator-facility">Loading...</strong>
+        </article>
+        <article class="operator-card">
+          <p class="label">Open Incidents</p>
+          <strong id="operator-open-incidents">0</strong>
+        </article>
+      </section>
+
+      <section class="operator-card">
+        <div class="panel-head">
+          <h3>Immediate Actions</h3>
+          <span class="badge">Checklist</span>
+        </div>
+        <div id="operator-actions" class="stack compact-stack"></div>
+      </section>
+
+      <section class="operator-card">
+        <div class="panel-head">
+          <h3>Latest Telemetry</h3>
+          <span class="badge">Field-ready</span>
+        </div>
+        <div id="operator-telemetry" class="stack"></div>
+      </section>
+
+      <section class="operator-card">
+        <div class="panel-head">
+          <h3>Facility Incidents</h3>
+          <span class="badge danger">Priority</span>
+        </div>
+        <div id="operator-incidents" class="stack"></div>
+      </section>
+    </main>
+
+    <script src="/static/common.js"></script>
+    <script src="/static/operator.js"></script>
+  </body>
+</html>

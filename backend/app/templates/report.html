@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_name }} | Executive Report</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body data-page="report">
+    <main class="report-shell">
+      <header class="report-head">
+        <div>
+          <p class="eyebrow">Executive Report</p>
+          <h1>{{ app_name }}</h1>
+          <p class="subtle">Presentation-ready analytics for semester review and viva.</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="ghost-btn" id="go-dashboard">Dashboard</button>
+          <button class="primary-btn" onclick="window.print()">Print / Save PDF</button>
+        </div>
+      </header>
+
+      <section id="report-kpis" class="metrics"></section>
+
+      <section class="grid two-up">
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Facility Performance</h3>
+            <span class="badge">Operations summary</span>
+          </div>
+          <div id="report-facilities" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Delivery Channels</h3>
+            <span class="badge">Alert delivery state</span>
+          </div>
+          <div id="report-delivery" class="stack"></div>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Recent Telemetry Points</h3>
+          <span class="badge">Operational evidence</span>
+        </div>
+        <div id="report-points" class="stack"></div>
+      </section>
+    </main>
+
+    <script src="/static/common.js"></script>
+    <script src="/static/report.js"></script>
+  </body>
+</html>

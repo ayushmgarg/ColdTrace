@@ -1,0 +1,40 @@
+from __future__ import annotations
+
+DEVICES = [
+    {
+        "device_id": "LTAT-MUM-01",
+        "gateway_id": "IGD-MUM-01",
+        "facility_id": "FAC-MUM-HUB",
+        "batch_id": "BATCH-CVX-002",
+        "transport_mode": "storage",
+        "latitude": 19.0760,
+        "longitude": 72.8777,
+        "baseline_temperature": 5.1,
+        "humidity_pct": 46.0,
+        "battery_voltage": 2.72,
+    },
+    {
+        "device_id": "LTAT-PUNE-TRUCK-01",
+        "gateway_id": "IGD-PUNE-01",
+        "facility_id": "FAC-PUNE-TRANSIT",
+        "batch_id": "BATCH-CVX-001",
+        "transport_mode": "transit",
+        "latitude": 18.5204,
+        "longitude": 73.8567,
+        "baseline_temperature": 4.8,
+        "humidity_pct": 51.0,
+        "battery_voltage": 2.58,
+    },
+    {
+        "device_id": "LTAT-NASHIK-01",
+        "gateway_id": "IGD-NASHIK-01",
+        "facility_id": "FAC-NASHIK-CLINIC",
+        "batch_id": "BATCH-CVX-001",
+        "transport_mode": "field_storage",
+        "latitude": 19.9975,
+        "longitude": 73.7898,
+        "baseline_temperature": 5.4,
+        "humidity_pct": 48.0,
+        "battery_voltage": 2.11,
+    },
+]
