@@ -1,7 +1,5 @@
 # ColdTrace DC — IoT Vaccine Cold Chain Monitoring
 
-**Semester Project · Distributed Computing · B116 / B143 / B146**
-
 A full-stack simulation of a 4-layer IoT cold chain management system for vaccines.  
 No real hardware needed — every physical component is simulated in software.
 
