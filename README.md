@@ -1,242 +1,130 @@
-# ColdTrace 
+# ColdTrace DC — IoT Vaccine Cold Chain Monitoring
 
-ColdTrace is a software-only implementation of a distributed vaccine cold chain monitoring platform based on the architecture described in the project PDFs.
+**Semester Project · Distributed Computing · B116 / B143 / B146**
 
-It simulates LTAT sensor nodes, an IGD-style gateway, a cloud analytics layer, role-based dashboards, report exports, mobile operator workflows, and optional real integrations for SMS, email, and transport maps.
+A full-stack simulation of a 4-layer IoT cold chain management system for vaccines.  
+No real hardware needed — every physical component is simulated in software.
+
+---
 
 ## Architecture
 
-The repo follows the same four-layer design from your semester documents:
-
-1. Sensor / Perception Layer
-   Simulated LTAT devices generate temperature, humidity, battery, and optional GPS telemetry.
-2. Gateway Layer
-   A software gateway buffers packets locally and flushes them when connectivity returns.
-3. Cloud Layer
-   FastAPI + SQLite ingest telemetry, detect excursions, trigger alerts, compute analytics, and maintain audit logs.
-4. Application Layer
-   Web operations console, executive report view, and mobile operator surface.
-
-## Implemented Features
-
-- Sensor simulation for storage, transit, and field devices
-- Gateway buffering with store-and-forward fault tolerance
-- Cloud telemetry ingestion and persistence
-- Temperature excursion detection
-- Low-battery detection
-- Hash-chained audit trail for tamper-evident records
-- Role-based authentication
-- User roles: admin, vaccine manager, supervisor, vaccinator
-- Operations dashboard
-- Mobile operator view
-- Executive report page
-- CSV export for summary and incident reports
-- Twilio-ready SMS delivery
-- SendGrid-ready email delivery
-- Mapbox-ready transport map
-- Google Stitch-ready frontend/API separation
-
-## Tech Stack
-
-- Backend: FastAPI
-- Storage: SQLite
-- Simulation: Python
-- Frontend: HTML, CSS, vanilla JS
-- Optional messaging: Twilio, SendGrid
-- Optional map layer: Mapbox
-- Optional external auth placeholders: Auth0, Firebase
-
-## Screens And Roles
-
-- `/login`
-  Role-based login screen
-- `/`
-  Main operations dashboard for admin, manager, supervisor
-- `/operator`
-  Mobile-friendly operator surface for vaccinators and field staff
-- `/reports/executive`
-  Presentation-ready analytics and print/save-as-PDF report
-
-Role matrix is documented in [docs/role-matrix.md](docs/role-matrix.md).
-
-## Project Structure
-
-```text
-ColdChainDC/
-├─ backend/
-│  └─ app/
-│     ├─ auth.py
-│     ├─ config.py
-│     ├─ database.py
-│     ├─ integrations.py
-│     ├─ main.py
-│     ├─ schemas.py
-│     ├─ services.py
-│     ├─ static/
-│     └─ templates/
-├─ docs/
-│  ├─ architecture-mapping.md
-│  ├─ role-matrix.md
-│  └─ stitch-ui-brief.md
-├─ scripts/
-├─ simulator/
-├─ .env
-├─ .env.example
-└─ requirements.txt
+```
+Layer 1 — Sensors     LTAT-* devices (simulated in run_gateway.py)
+               ↕  MQTT / HTTP POST (store-and-forward)
+Layer 2 — Gateways    IGD-* gateway nodes (SQLite buffer in gateway_buffer.db)
+               ↕  4G Cat.1 / HTTP POST
+Layer 3 — Cloud       FastAPI + SQLite (backend/app/)
+               ↕  REST API + polling
+Layer 4 — App         Web Dashboard  /  Field View  /  Executive Report
 ```
 
-## Setup
+---
 
-### 1. Install dependencies
+## Quick Start
 
-```powershell
-python -m pip install -r requirements.txt
+### 1 — Install dependencies
+```bash
+pip install -r requirements.txt
 ```
 
-### 2. Configure environment
+### 2 — Start the backend (Terminal 1)
+```bash
+cd backend
+uvicorn app.main:app --reload --port 8000
+```
 
-Copy `.env.example` to `.env` if needed. A ready-to-edit `.env` file is already included in this workspace.
+### 3 — Start the simulator (Terminal 2)
+```bash
+cd simulator
+python run_gateway.py
+```
 
-Important fields:
+### 4 — Open the UI
+```
+http://localhost:8000/login
+```
 
-```env
-APP_NAME=ColdTrace DC
-JWT_SECRET=change-this-secret-before-demo
-EMAIL_FROM=ayush13garg10@gmail.com
+| Role        | Email                        | Password       |
+|-------------|------------------------------|----------------|
+| Admin       | admin@coldtrace.local        | Admin@123      |
+| Manager     | manager@coldtrace.local      | Manager@123    |
+| Supervisor  | supervisor@coldtrace.local   | Supervisor@123 |
+| Field       | vaccinator@coldtrace.local   | Vaccinator@123 |
+
+---
+
+## Pages
+
+| URL                   | Purpose                                              |
+|-----------------------|------------------------------------------------------|
+| `/`                   | Main operations dashboard (charts, DC architecture) |
+| `/operator`           | Mobile field view (sensor readings, gateway status)  |
+| `/reports/executive`  | Viva/print report with charts and DC concept grid    |
+| `/login`              | Authentication                                       |
+
+---
+
+## DC Concepts → Code Locations
+
+| Concept             | Where                                                       |
+|---------------------|-------------------------------------------------------------|
+| Hybrid architecture | `simulator/run_gateway.py` buffer + `backend/app/services.py` cloud |
+| Client-server       | LTAT→IGD→Cloud→Browser hierarchy throughout                |
+| Store-and-forward   | `gateway_buffer.db` SQLite buffer in simulator              |
+| Fault tolerance     | `maybe_fail()` in simulator, 5 sensors per LTAT             |
+| Message persistence | `buffered_packets` table, flush on reconnect                |
+| Clock sync          | `utc_now()` UTC timestamp on every packet                   |
+| Reliable multicast  | `create_notifications()` in `services.py` — SMS + email     |
+| Naming              | Structured IDs: LTAT-*, IGD-*, FAC-*, BATCH-*, INC-*       |
+| Audit chain         | SHA-256 hash-linked `audit_log` table in `services.py`      |
+
+---
+
+## Environment Variables (.env)
+
+Copy `.env.example` to `.env` and fill in only what you need:
+
+```
+# Leave Twilio/SendGrid blank → simulation mode (still logs notifications)
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
-TWILIO_FROM_NUMBER=
 SENDGRID_API_KEY=
+
+# Leave blank → SVG fallback map is shown instead of Mapbox
 MAPBOX_ACCESS_TOKEN=
 ```
 
-Notes:
+**Never commit real API keys to version control.**
 
-- Email sender is already set to `ayush13garg10@gmail.com`
-- Twilio and SendGrid stay in simulated mode until you add real keys
-- Mapbox transport map activates only after you paste a token
+---
 
-### 3. Start the backend
+## Simulated Excursion Scenarios
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\run_backend.ps1
-```
+The simulator automatically creates incidents:
 
-### 4. Start the simulator
+| Device              | Excursion type                | Cycle pattern |
+|---------------------|-------------------------------|---------------|
+| LTAT-PUNE-TRUCK-01  | High temp (door left open)    | Steps 4,5,6 of every 12 |
+| LTAT-NASHIK-01      | Low temp (power outage)       | Steps 7,8 of every 16   |
+| LTAT-KOL-01         | High temp (older equipment)   | Steps 10,11 of every 20 |
 
-Open another terminal and run:
+These trigger: incident creation → notification dispatch → alert multicast log.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\run_gateway_sim.ps1
-```
+---
 
-### 5. Open the app
+## Database Tables
 
-Visit:
-
-- [http://127.0.0.1:8000/login](http://127.0.0.1:8000/login)
-
-## Default Demo Logins
-
-- `admin@coldtrace.local` / `Admin@123`
-- `manager@coldtrace.local` / `Manager@123`
-- `supervisor@coldtrace.local` / `Supervisor@123`
-- `vaccinator@coldtrace.local` / `Vaccinator@123`
-
-You can change these in `.env`:
-
-- `DEMO_ADMIN_PASSWORD`
-- `DEMO_MANAGER_PASSWORD`
-- `DEMO_SUPERVISOR_PASSWORD`
-- `DEMO_VACCINATOR_PASSWORD`
-
-## Integrations
-
-### Twilio SMS
-
-Add these values in `.env`:
-
-```env
-TWILIO_ACCOUNT_SID=your_sid
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_FROM_NUMBER=your_twilio_number
-```
-
-If not configured, SMS stays simulated and still gets logged in the notification table.
-
-### SendGrid Email
-
-Add this in `.env`:
-
-```env
-SENDGRID_API_KEY=your_sendgrid_key
-EMAIL_FROM=ayush13garg10@gmail.com
-EMAIL_FROM_NAME=Ayush Garg
-```
-
-Important:
-
-- the sender email must be verified in your SendGrid setup
-- if not configured, email stays simulated and still gets logged
-
-### Mapbox
-
-Add this in `.env`:
-
-```env
-MAPBOX_ACCESS_TOKEN=your_mapbox_token
-MAPBOX_STYLE=mapbox://styles/mapbox/dark-v11
-```
-
-Then the operations dashboard shows live transit points on a map.
-
-## Authentication
-
-Current implementation uses local JWT-based authentication with seeded users and roles.
-
-Why this choice:
-
-- it works fully offline for a semester demo
-- it avoids blocking the core system on external identity setup
-- it keeps the project functional even before you add third-party credentials
-
-Placeholders for future external auth are already included in `.env`:
-
-- `AUTH0_DOMAIN`
-- `AUTH0_AUDIENCE`
-- `AUTH0_CLIENT_ID`
-- `FIREBASE_PROJECT_ID`
-- `FIREBASE_WEB_API_KEY`
-
-## APIs
-
-Public:
-
-- `GET /health`
-- `GET /api/public/config`
-- `POST /api/auth/login`
-- `POST /api/telemetry`
-
-Protected:
-
-- `GET /api/auth/me`
-- `GET /api/overview`
-- `GET /api/telemetry/recent`
-- `GET /api/incidents`
-- `GET /api/notifications`
-- `GET /api/batches`
-- `GET /api/transit/latest`
-- `GET /api/reports/analytics`
-- `GET /api/reports/export/summary.csv`
-- `GET /api/reports/export/incidents.csv`
-
-
-## Future Upgrades
-
-- PDF report generation beyond print/save-as-PDF
-- live WebSocket streaming
-- QR or barcode scan workflow for batch movement
-- vaccine route replay on maps
-- fully externalized auth with Auth0 or Firebase
-- richer device assignment and field-team workflows
-
+| Table             | Purpose                                    |
+|-------------------|--------------------------------------------|
+| `facilities`      | 6 facilities across Maharashtra            |
+| `gateways`        | 6 IGD gateway nodes                        |
+| `devices`         | 7 LTAT sensor devices                      |
+| `vaccines`        | 5 vaccine types with storage requirements  |
+| `batches`         | 5 vaccine batches with lot numbers         |
+| `telemetry`       | All sensor readings (grows continuously)   |
+| `incidents`       | Auto-created on threshold breach           |
+| `notifications`   | SMS/email multicast log                    |
+| `audit_log`       | SHA-256 hash-linked immutable audit chain  |
+| `dc_events`       | DC system events feed for dashboard        |
+| `users`           | 4 demo users with role-based access        |

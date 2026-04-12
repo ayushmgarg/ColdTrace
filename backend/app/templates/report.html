@@ -1,55 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ app_name }} | Executive Report</title>
-    <link rel="stylesheet" href="/static/styles.css" />
-  </head>
-  <body data-page="report">
-    <main class="report-shell">
-      <header class="report-head">
-        <div>
-          <p class="eyebrow">Executive Report</p>
-          <h1>{{ app_name }}</h1>
-          <p class="subtle">Presentation-ready analytics for semester review and viva.</p>
-        </div>
-        <div class="topbar-actions">
-          <button class="ghost-btn" id="go-dashboard">Dashboard</button>
-          <button class="primary-btn" onclick="window.print()">Print / Save PDF</button>
-        </div>
-      </header>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{{ app_name }} | Executive Report</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      .panel { break-inside: avoid; }
+      body { background: #fff !important; color: #111 !important; }
+      .kpi-card { background: #f5f5f5 !important; border-color: #ddd !important; }
+      .kpi-label, .kpi-sub { color: #555 !important; }
+      .kpi-value { color: #111 !important; }
+      .topbar { display: none !important; }
+    }
+    .report-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 1.5rem; padding: 1.5rem 0 1.25rem; border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+    .report-logo { display: flex; align-items: center; gap: .75rem; }
+    .report-logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg,var(--accent),var(--accent-dk));
+      border-radius: 10px; display: grid; place-items: center; font-size: 20px; flex-shrink: 0; }
+    .report-title { font-size: 1.5rem; font-weight: 700; }
+    .report-subtitle { font-size: .84rem; color: var(--muted); margin-top: .2rem; }
+    .report-meta { font-size: .78rem; color: var(--faint); text-align: right; }
+    .dc-concept-box {
+      background: rgba(61,214,245,.04); border: 1px solid rgba(61,214,245,.12);
+      border-radius: var(--radius-md); padding: 1.1rem 1.4rem; margin-bottom: 1rem;
+    }
+    .dc-concept-label { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: .5rem; font-weight: 600; }
+    .dc-concept-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: .75rem; margin-top: .75rem; }
+    .dc-concept-item { background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: .75rem 1rem; }
+    .dc-concept-item-name { font-weight: 600; font-size: .84rem; margin-bottom: .2rem; }
+    .dc-concept-item-desc { font-size: .76rem; color: var(--muted); line-height: 1.5; }
+    .perf-bar-row { display: flex; align-items: center; gap: .75rem; margin-bottom: .6rem; }
+    .perf-bar-label { font-size: .82rem; color: var(--text); width: 160px; flex-shrink: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .perf-bar-track { flex: 1; height: 8px; background: var(--panel); border-radius: 99px; overflow: hidden; }
+    .perf-bar-fill { height: 8px; border-radius: 99px; transition: width .6s ease; }
+    .perf-bar-val { font-size: .78rem; color: var(--muted); width: 60px; text-align: right; flex-shrink: 0; }
+  </style>
+</head>
+<body data-page="report">
+<main class="report-shell">
 
-      <section id="report-kpis" class="metrics"></section>
+  <!-- Nav (hidden in print) -->
+  <nav class="topbar no-print" style="margin-bottom:1.5rem">
+    <div style="display:flex;align-items:center;gap:.6rem">
+      <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--accent),var(--accent-dk));border-radius:7px;display:grid;place-items:center;font-size:14px">❄</div>
+      <span style="font-weight:600">{{ app_name }}</span>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <button class="btn-ghost btn-sm" id="go-dashboard">← Dashboard</button>
+      <button class="btn-primary btn-sm" onclick="window.print()">Print / PDF</button>
+    </div>
+  </nav>
 
-      <section class="grid two-up">
-        <article class="panel">
-          <div class="panel-head">
-            <h3>Facility Performance</h3>
-            <span class="badge">Operations summary</span>
-          </div>
-          <div id="report-facilities" class="stack"></div>
-        </article>
+  <!-- Report header (visible in print too) -->
+  <div class="report-header">
+    <div class="report-logo">
+      <div class="report-logo-icon">❄</div>
+      <div>
+        <div class="report-title">{{ app_name }} — Executive Report</div>
+        <div class="report-subtitle">IoT Cold Chain Distributed System · Semester Project Analysis</div>
+      </div>
+    </div>
+    <div class="report-meta">
+      Generated: {{ generated_at }}<br>
+      System: {{ app_name }}<br>
+      Classification: Academic
+    </div>
+  </div>
 
-        <article class="panel">
-          <div class="panel-head">
-            <h3>Delivery Channels</h3>
-            <span class="badge">Alert delivery state</span>
-          </div>
-          <div id="report-delivery" class="stack"></div>
-        </article>
-      </section>
+  <!-- KPI summary strip -->
+  <div class="kpi-grid" id="report-kpis" style="margin-bottom:1.5rem"></div>
 
-      <section class="panel">
-        <div class="panel-head">
-          <h3>Recent Telemetry Points</h3>
-          <span class="badge">Operational evidence</span>
-        </div>
-        <div id="report-points" class="stack"></div>
-      </section>
-    </main>
+  <!-- DC Concepts demonstrated -->
+  <div class="dc-concept-box">
+    <div class="dc-concept-label">Distributed Computing Concepts — Demonstrated in this System</div>
+    <div class="dc-concept-grid">
+      <div class="dc-concept-item">
+        <div class="dc-concept-item-name">Hybrid Architecture</div>
+        <div class="dc-concept-item-desc">IGD stores locally when cloud is offline; cloud is authoritative source of truth.</div>
+      </div>
+      <div class="dc-concept-item">
+        <div class="dc-concept-item-name">Client-Server Hierarchy</div>
+        <div class="dc-concept-item-desc">LTAT → IGD → Cloud → Dashboard. Each layer is client to the next.</div>
+      </div>
+      <div class="dc-concept-item">
+        <div class="dc-concept-item-name">Fault Tolerance</div>
+        <div class="dc-concept-item-desc">Store-and-forward SQLite buffer in gateway. 5 redundant sensors per LTAT.</div>
+      </div>
+      <div class="dc-concept-item">
+        <div class="dc-concept-item-name">Message Persistence</div>
+        <div class="dc-concept-item-desc">Gateway buffers packets during outages; flushes when cloud reconnects.</div>
+      </div>
+      <div class="dc-concept-item">
+        <div class="dc-concept-item-name">Reliable Multicast</div>
+        <div class="dc-concept-item-desc">Alert engine broadcasts to all registered managers via SMS + email simultaneously.</div>
+      </div>
+      <div class="dc-concept-item">
+        <div class="dc-concept-item-name">Clock Synchronisation</div>
+        <div class="dc-concept-item-desc">UTC timestamps on every packet. Preserved from acquisition → gateway → cloud.</div>
+      </div>
+      <div class="dc-concept-item">
+        <div class="dc-concept-item-name">Naming & Identifiers</div>
+        <div class="dc-concept-item-desc">Structured IDs: LTAT-*, IGD-*, FAC-*, BATCH-*, INC-*, NTF-* throughout.</div>
+      </div>
+      <div class="dc-concept-item">
+        <div class="dc-concept-item-name">Audit Chain (Blockchain-lite)</div>
+        <div class="dc-concept-item-desc">SHA-256 hash-linked audit_log. Each entry references previous entry's hash.</div>
+      </div>
+    </div>
+  </div>
 
-    <script src="/static/common.js"></script>
-    <script src="/static/report.js"></script>
-  </body>
+  <!-- Charts row -->
+  <div class="section-grid two-col" style="margin-bottom:1rem">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">📊 Compliance Over Time</span>
+        <span class="panel-badge">Telemetry analytics</span>
+      </div>
+      <canvas id="report-bar-chart" height="200"></canvas>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">🚨 Incident Breakdown</span>
+        <span class="panel-badge">By type</span>
+      </div>
+      <canvas id="report-inc-chart" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Facility performance bars -->
+  <div class="panel" style="margin-bottom:1rem">
+    <div class="panel-head">
+      <span class="panel-title">🏥 Facility Performance</span>
+      <span class="panel-badge">Excursion rate per facility</span>
+    </div>
+    <div id="report-perf-bars"></div>
+  </div>
+
+  <!-- Two-col: notification delivery + recent points table -->
+  <div class="section-grid two-col" style="margin-bottom:1rem">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">📬 Alert Delivery Channels</span>
+        <span class="panel-badge">Reliable multicast state</span>
+      </div>
+      <div id="report-delivery"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">📡 Recent Telemetry Sample</span>
+        <span class="panel-badge">Operational evidence</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Device</th><th>Temp</th><th>Battery</th><th>Time</th></tr></thead>
+          <tbody id="report-points-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit trail excerpt -->
+  <div class="panel" style="margin-bottom:1rem">
+    <div class="panel-head">
+      <span class="panel-title">🔐 Audit Chain — Hash-Linked Log Excerpt</span>
+      <span class="panel-badge">DC Concept: Blockchain-lite immutable trail</span>
+    </div>
+    <div id="report-audit" class="table-wrap">
+      <p class="empty-state">Loading audit entries…</p>
+    </div>
+  </div>
+
+</main>
+<script src="/static/common.js"></script>
+<script src="/static/report.js"></script>
+</body>
 </html>

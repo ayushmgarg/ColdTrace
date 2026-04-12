@@ -17,6 +17,7 @@ def get_connection() -> sqlite3.Connection:
     connection = sqlite3.connect(get_db_path(), check_same_thread=False)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON;")
+    connection.execute("PRAGMA journal_mode = WAL;")
     return connection
 
 
@@ -26,7 +27,23 @@ CREATE TABLE IF NOT EXISTS facilities (
     name TEXT NOT NULL,
     facility_type TEXT NOT NULL,
     region TEXT NOT NULL,
-    status TEXT NOT NULL
+    status TEXT NOT NULL,
+    latitude REAL,
+    longitude REAL,
+    address TEXT,
+    contact_name TEXT,
+    contact_phone TEXT
+);
+
+CREATE TABLE IF NOT EXISTS gateways (
+    id TEXT PRIMARY KEY,
+    facility_id TEXT NOT NULL,
+    model TEXT NOT NULL DEFAULT 'IGD-v2',
+    status TEXT NOT NULL DEFAULT 'online',
+    firmware_version TEXT DEFAULT '2.1.4',
+    last_seen_at TEXT,
+    buffered_packets INTEGER DEFAULT 0,
+    FOREIGN KEY (facility_id) REFERENCES facilities(id)
 );
 
 CREATE TABLE IF NOT EXISTS devices (
@@ -38,17 +55,35 @@ CREATE TABLE IF NOT EXISTS devices (
     min_temp_c REAL NOT NULL,
     max_temp_c REAL NOT NULL,
     last_seen_at TEXT,
+    firmware_version TEXT DEFAULT '1.4.2',
+    sensor_count INTEGER DEFAULT 5,
     FOREIGN KEY (facility_id) REFERENCES facilities(id)
+);
+
+CREATE TABLE IF NOT EXISTS vaccines (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    manufacturer TEXT NOT NULL,
+    storage_temp_min REAL NOT NULL DEFAULT 2.0,
+    storage_temp_max REAL NOT NULL DEFAULT 8.0,
+    shelf_life_days INTEGER NOT NULL DEFAULT 730,
+    requires_freezer INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS batches (
     id TEXT PRIMARY KEY,
+    vaccine_id TEXT,
     vaccine_name TEXT NOT NULL,
     manufacturer TEXT NOT NULL,
+    lot_number TEXT,
     origin_facility_id TEXT NOT NULL,
     destination_facility_id TEXT NOT NULL,
     status TEXT NOT NULL,
     doses_total INTEGER NOT NULL,
+    doses_remaining INTEGER,
+    manufactured_at TEXT,
+    expires_at TEXT,
+    FOREIGN KEY (vaccine_id) REFERENCES vaccines(id),
     FOREIGN KEY (origin_facility_id) REFERENCES facilities(id),
     FOREIGN KEY (destination_facility_id) REFERENCES facilities(id)
 );
@@ -67,11 +102,16 @@ CREATE TABLE IF NOT EXISTS telemetry (
     latitude REAL,
     longitude REAL,
     transport_mode TEXT NOT NULL,
+    rolling_avg_c REAL,
+    trend_slope REAL,
     created_at TEXT NOT NULL,
     FOREIGN KEY (device_id) REFERENCES devices(id),
     FOREIGN KEY (facility_id) REFERENCES facilities(id),
     FOREIGN KEY (batch_id) REFERENCES batches(id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_telemetry_device_time ON telemetry(device_id, recorded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_telemetry_facility ON telemetry(facility_id);
 
 CREATE TABLE IF NOT EXISTS incidents (
     id TEXT PRIMARY KEY,
@@ -131,6 +171,17 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TEXT NOT NULL,
     FOREIGN KEY (assigned_facility_id) REFERENCES facilities(id)
 );
+
+CREATE TABLE IF NOT EXISTS dc_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    node_id TEXT NOT NULL,
+    description TEXT NOT NULL,
+    metadata TEXT,
+    occurred_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_dc_events_time ON dc_events(occurred_at DESC);
 """
 
 
@@ -138,16 +189,29 @@ def init_db() -> None:
     connection = get_connection()
     try:
         connection.executescript(SCHEMA)
-        migrations = [
-            "ALTER TABLE notifications ADD COLUMN provider TEXT DEFAULT 'simulation'",
-            "ALTER TABLE notifications ADD COLUMN provider_message_id TEXT DEFAULT ''",
-            "ALTER TABLE notifications ADD COLUMN error_message TEXT DEFAULT ''",
-        ]
-        for statement in migrations:
-            try:
-                connection.execute(statement)
-            except sqlite3.OperationalError:
-                pass
+        _run_migrations(connection)
         connection.commit()
     finally:
         connection.close()
+
+
+def _run_migrations(connection: sqlite3.Connection) -> None:
+    migrations = [
+        "ALTER TABLE notifications ADD COLUMN provider TEXT DEFAULT 'simulation'",
+        "ALTER TABLE notifications ADD COLUMN provider_message_id TEXT DEFAULT ''",
+        "ALTER TABLE notifications ADD COLUMN error_message TEXT DEFAULT ''",
+        "ALTER TABLE telemetry ADD COLUMN rolling_avg_c REAL",
+        "ALTER TABLE telemetry ADD COLUMN trend_slope REAL",
+        "ALTER TABLE batches ADD COLUMN vaccine_id TEXT",
+        "ALTER TABLE batches ADD COLUMN lot_number TEXT",
+        "ALTER TABLE batches ADD COLUMN doses_remaining INTEGER",
+        "ALTER TABLE batches ADD COLUMN manufactured_at TEXT",
+        "ALTER TABLE batches ADD COLUMN expires_at TEXT",
+        "ALTER TABLE devices ADD COLUMN firmware_version TEXT DEFAULT '1.4.2'",
+        "ALTER TABLE devices ADD COLUMN sensor_count INTEGER DEFAULT 5",
+    ]
+    for stmt in migrations:
+        try:
+            connection.execute(stmt)
+        except sqlite3.OperationalError:
+            pass

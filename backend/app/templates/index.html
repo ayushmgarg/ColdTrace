@@ -1,156 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ app_name }} | Operations Console</title>
-    <link rel="stylesheet" href="/static/styles.css" />
-  </head>
-  <body data-page="dashboard">
-    <div class="bg-orb orb-a"></div>
-    <div class="bg-orb orb-b"></div>
-    <main class="shell">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">{{ tagline }}</p>
-          <h1>{{ app_name }}</h1>
-        </div>
-        <div class="topbar-actions">
-          <span id="user-pill" class="user-pill">Loading user...</span>
-          <button class="ghost-btn" id="go-operator">Mobile View</button>
-          <button class="ghost-btn" id="go-report">Reports</button>
-          <button class="ghost-btn" id="logout-btn">Logout</button>
-        </div>
-      </header>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{{ app_name }} | Operations Console</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body data-page="dashboard">
+<main class="shell">
 
-      <section class="hero">
-        <div>
-          <p class="eyebrow">Operations Control Room</p>
-          <h2>Live monitoring, incident response, traceability, and transport oversight</h2>
-          <p class="lede">
-            Built for Google Stitch handoff: the visual layer can change later without breaking
-            the REST contracts or the distributed system logic underneath.
-          </p>
-        </div>
-        <div class="hero-actions">
-          <button class="primary-btn" id="download-summary">Export Summary CSV</button>
-          <button class="secondary-btn" id="download-incidents">Export Incidents CSV</button>
-        </div>
-      </section>
+  <!-- Topbar -->
+  <nav class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">❄</div>
+      <div>
+        <div class="topbar-name">{{ app_name }}</div>
+        <div class="topbar-tag">{{ tagline }}</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span id="user-pill" class="user-pill"><span class="user-pip"></span> Loading...</span>
+      <button class="btn-ghost btn-sm" id="go-operator">Field View</button>
+      <button class="btn-ghost btn-sm" id="go-report">Reports</button>
+      <button class="btn-ghost btn-sm" id="download-summary">↓ Summary CSV</button>
+      <button class="btn-ghost btn-sm" id="download-incidents">↓ Incidents CSV</button>
+      <button class="btn-danger btn-sm" id="logout-btn">Sign out</button>
+    </div>
+  </nav>
 
-      <section class="metrics" id="summary-cards"></section>
+  <!-- Hero -->
+  <div class="hero-banner">
+    <div>
+      <div class="hero-eyebrow">Operations Control Room</div>
+      <h1 class="hero-title">Live Cold Chain Monitoring</h1>
+      <p class="hero-sub">Distributed IoT system — 4 layers: Sensors → Gateways → Cloud → Dashboard. Real-time telemetry, incident response, and vaccine traceability.</p>
+    </div>
+    <div class="hero-actions">
+      <div id="live-indicator" style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--muted)">
+        <span class="status-dot healthy"></span> Live — refreshing every 5 s
+      </div>
+    </div>
+  </div>
 
-      <section class="grid two-up">
-        <article class="panel">
-          <div class="panel-head">
-            <h3>Presentation Analytics</h3>
-            <span class="badge">Faculty demo</span>
-          </div>
-          <div id="analytics-kpis" class="stack"></div>
-        </article>
+  <!-- KPI strip -->
+  <div class="kpi-grid" id="kpi-grid"></div>
 
-        <article class="panel">
-          <div class="panel-head">
-            <h3>Notification Delivery</h3>
-            <span class="badge">Twilio + SendGrid aware</span>
-          </div>
-          <div id="delivery-mix" class="stack"></div>
-        </article>
-      </section>
+  <!-- DC Architecture row -->
+  <div class="section-label">Distributed System Architecture</div>
+  <div class="panel" style="margin-bottom:1rem">
+    <div class="panel-head">
+      <span class="panel-title">&#9679; 4-Layer IoT Architecture — Live Node Status</span>
+      <span class="panel-badge">DC Concept: Client-Server Hierarchy</span>
+    </div>
+    <div id="arch-diagram" class="arch-diagram"></div>
+  </div>
 
-      <section class="grid two-up">
-        <article class="panel">
-          <div class="panel-head">
-            <h3>Facility Health</h3>
-            <span class="badge">Regional view</span>
-          </div>
-          <div id="facility-health" class="stack"></div>
-        </article>
+  <!-- Main 2-col grid -->
+  <div class="section-grid two-col">
 
-        <article class="panel">
-          <div class="panel-head">
-            <h3>Open Incident Mix</h3>
-            <span class="badge">Risk signals</span>
-          </div>
-          <div id="incident-mix" class="mix"></div>
-        </article>
-      </section>
+    <!-- Left: Temperature Chart -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">📈 Temperature Trend (30-min window)</span>
+        <span class="panel-badge">Rolling Average</span>
+      </div>
+      <div class="chart-wrap"><canvas id="temp-chart"></canvas></div>
+    </div>
 
-      <section class="grid two-up">
-        <article class="panel">
-          <div class="panel-head">
-            <h3>Transit Map</h3>
-            <span class="badge">Mapbox ready</span>
-          </div>
-          <div id="map-status" class="subtle"></div>
-          <div id="map" class="map-shell"></div>
-          <div id="transit-list" class="stack compact-stack"></div>
-        </article>
+    <!-- Right: DC Event Feed -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">⚡ Distributed System Events</span>
+        <span class="panel-badge">DC Concept: Message Persistence</span>
+      </div>
+      <div id="dc-feed" class="dc-feed"></div>
+    </div>
 
-        <article class="panel">
-          <div class="panel-head">
-            <h3>Recent Trend Points</h3>
-            <span class="badge">Telemetry window</span>
-          </div>
-          <div id="recent-points" class="stack compact-stack"></div>
-        </article>
-      </section>
+  </div>
 
-      <section class="grid">
-        <article class="panel">
-          <div class="panel-head">
-            <h3>Live Telemetry Feed</h3>
-            <span class="badge">Latest packets</span>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Device</th>
-                  <th>Facility</th>
-                  <th>Temp</th>
-                  <th>Humidity</th>
-                  <th>Battery</th>
-                  <th>Mode</th>
-                </tr>
-              </thead>
-              <tbody id="telemetry-body"></tbody>
-            </table>
-          </div>
-        </article>
-      </section>
+  <!-- Second row -->
+  <div class="section-grid two-col">
 
-      <section class="grid two-up">
-        <article class="panel">
-          <div class="panel-head">
-            <h3>Incidents</h3>
-            <span class="badge danger">Threshold breaches</span>
-          </div>
-          <div id="incidents-list" class="stack"></div>
-        </article>
+    <!-- Facility health -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">🏥 Facility Health</span>
+        <span class="panel-badge">Regional view</span>
+      </div>
+      <div id="facility-health"></div>
+    </div>
 
-        <article class="panel">
-          <div class="panel-head">
-            <h3>Notification Log</h3>
-            <span class="badge">Delivery audit</span>
-          </div>
-          <div id="notification-list" class="stack"></div>
-        </article>
-      </section>
+    <!-- Incident mix + compliance donut -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">📊 Compliance &amp; Risk</span>
+        <span class="panel-badge">Analytics</span>
+      </div>
+      <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+        <canvas id="compliance-chart" width="140" height="140" style="flex-shrink:0;display:block"></canvas>
+        <div id="incident-mix" style="flex:1"></div>
+      </div>
+    </div>
 
-      <section class="grid">
-        <article class="panel">
-          <div class="panel-head">
-            <h3>Batch Traceability</h3>
-            <span class="badge">Origin to destination</span>
-          </div>
-          <div id="batch-list" class="stack"></div>
-        </article>
-      </section>
-    </main>
+  </div>
 
-    <script src="/static/common.js"></script>
-    <script src="/static/app.js"></script>
-  </body>
+  <!-- Gateway status row -->
+  <div class="section-label">Gateway Layer — Store-and-Forward Nodes</div>
+  <div class="panel" style="margin-bottom:1rem">
+    <div class="panel-head">
+      <span class="panel-title">🌐 Gateway Status</span>
+      <span class="panel-badge">DC Concept: Fault Tolerance &amp; Store-and-Forward</span>
+    </div>
+    <div id="gateway-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem"></div>
+  </div>
+
+  <!-- Transit Map + Telemetry table -->
+  <div class="section-grid two-col">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">🗺 Transit Map</span>
+        <span class="panel-badge">CCVE live location</span>
+      </div>
+      <div id="map-status" class="ts" style="margin-bottom:.5rem"></div>
+      <div id="map" class="map-shell"></div>
+      <div id="transit-list" style="margin-top:.75rem"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">📡 Live Telemetry Feed</span>
+        <span class="panel-badge">Latest packets</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Time</th><th>Device</th><th>Temp</th><th>Humidity</th><th>Battery</th><th>Mode</th>
+          </tr></thead>
+          <tbody id="telemetry-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incidents + Notifications -->
+  <div class="section-label">Incident Management</div>
+  <div class="section-grid two-col">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">🚨 Incidents</span>
+        <span class="panel-badge">Threshold breaches</span>
+      </div>
+      <div id="incidents-list"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">📬 Notification Log</span>
+        <span class="panel-badge">DC Concept: Reliable Multicast</span>
+      </div>
+      <div id="notification-list"></div>
+    </div>
+  </div>
+
+  <!-- Batch Traceability -->
+  <div class="section-label">Vaccine Batch Traceability</div>
+  <div class="panel" style="margin-bottom:1rem">
+    <div class="panel-head">
+      <span class="panel-title">💉 Batch Lifecycle</span>
+      <span class="panel-badge">Origin → Destination</span>
+    </div>
+    <div id="batch-list"></div>
+  </div>
+
+</main>
+<script src="/static/common.js"></script>
+<script src="/static/app.js"></script>
+</body>
 </html>

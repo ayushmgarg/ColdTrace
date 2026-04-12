@@ -1,43 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ app_name }} | Login</title>
-    <link rel="stylesheet" href="/static/styles.css" />
-  </head>
-  <body data-page="login">
-    <main class="auth-shell">
-      <section class="auth-panel">
-        <p class="eyebrow">{{ tagline }}</p>
-        <h1>{{ app_name }}</h1>
-        <p class="lede">Role-based login for admins, managers, supervisors, and vaccinators.</p>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{{ app_name }} — Sign In</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+</head>
+<body>
+<main class="auth-shell">
+  <div class="auth-panel">
+    <div class="auth-logo">❄</div>
+    <h1 class="auth-title">{{ app_name }}</h1>
+    <p class="auth-sub">{{ tagline }}</p>
 
-        <form id="login-form" class="auth-form">
-          <label>
-            Email
-            <input type="email" id="email" placeholder="manager@coldtrace.local" required />
-          </label>
-          <label>
-            Password
-            <input type="password" id="password" placeholder="Enter password" required />
-          </label>
-          <button type="submit" class="primary-btn wide-btn">Sign In</button>
-        </form>
+    <div id="error-box" class="error-msg hidden"></div>
 
-        <div id="login-error" class="error-box hidden"></div>
+    <form class="auth-form" id="login-form">
+      <div class="auth-field">
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" autocomplete="email" placeholder="admin@coldtrace.local" required/>
+      </div>
+      <div class="auth-field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" required/>
+      </div>
+      <button type="submit" class="btn-primary btn-wide" id="login-btn">Sign in</button>
+    </form>
 
-        <div class="demo-box">
-          <strong>Demo users</strong>
-          <p>`admin@coldtrace.local` / `Admin@123`</p>
-          <p>`manager@coldtrace.local` / `Manager@123`</p>
-          <p>`supervisor@coldtrace.local` / `Supervisor@123`</p>
-          <p>`vaccinator@coldtrace.local` / `Vaccinator@123`</p>
-        </div>
-      </section>
-    </main>
-
-    <script src="/static/common.js"></script>
-    <script src="/static/login.js"></script>
-  </body>
+    <div class="demo-accounts">
+      <p>Demo credentials</p>
+      <div class="demo-cred">
+        <div>Admin — <code>admin@coldtrace.local</code> / <code>Admin@123</code></div>
+        <div>Manager — <code>manager@coldtrace.local</code> / <code>Manager@123</code></div>
+        <div>Supervisor — <code>supervisor@coldtrace.local</code> / <code>Supervisor@123</code></div>
+        <div>Field — <code>vaccinator@coldtrace.local</code> / <code>Vaccinator@123</code></div>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="/static/common.js"></script>
+<script src="/static/login.js"></script>
+</body>
 </html>

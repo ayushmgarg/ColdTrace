@@ -1,67 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ app_name }} | Operator View</title>
-    <link rel="stylesheet" href="/static/styles.css" />
-  </head>
-  <body data-page="operator">
-    <main class="operator-shell">
-      <header class="operator-top">
-        <div>
-          <p class="eyebrow">Mobile Operator Surface</p>
-          <h1>{{ app_name }}</h1>
-        </div>
-        <div class="topbar-actions">
-          <button class="ghost-btn" id="go-dashboard">Dashboard</button>
-          <button class="ghost-btn" id="logout-btn">Logout</button>
-        </div>
-      </header>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{{ app_name }} | Field View</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <style>
+    /* Extra styles for the field/mobile view */
+    .field-header {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+    }
+    .field-brand { display: flex; align-items: center; gap: .6rem; }
+    .field-logo { width: 28px; height: 28px; background: linear-gradient(135deg,var(--accent),var(--accent-dk));
+      border-radius: 7px; display: grid; place-items: center; font-size: 14px; }
+    .field-title { font-weight: 600; font-size: .95rem; }
+    .field-sub { font-size: .72rem; color: var(--muted); }
 
-      <section class="operator-card accent-card">
-        <p class="label">Signed in as</p>
-        <strong id="operator-name">Loading...</strong>
-        <p id="operator-role" class="subtle"></p>
-      </section>
+    .user-card {
+      background: linear-gradient(135deg, rgba(15,34,48,.98), rgba(8,20,30,.95));
+      border: 1px solid var(--border-md);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.4rem;
+      margin-bottom: 1rem;
+    }
+    .user-card-name { font-size: 1.1rem; font-weight: 700; margin-bottom: .2rem; }
+    .user-card-role { font-size: .8rem; color: var(--muted); }
+    .user-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-top: 1rem; }
+    .user-card-stat { background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: .75rem 1rem; }
+    .user-card-stat-val { font-size: 1.4rem; font-weight: 700; }
+    .user-card-stat-lbl { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
 
-      <section class="operator-grid">
-        <article class="operator-card">
-          <p class="label">Assigned Facility</p>
-          <strong id="operator-facility">Loading...</strong>
-        </article>
-        <article class="operator-card">
-          <p class="label">Open Incidents</p>
-          <strong id="operator-open-incidents">0</strong>
-        </article>
-      </section>
+    .action-item {
+      display: flex; align-items: flex-start; gap: .75rem;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: .85rem 1rem; margin-bottom: .5rem;
+    }
+    .action-item:last-child { margin-bottom: 0; }
+    .action-icon { font-size: 1rem; margin-top: .1rem; flex-shrink: 0; }
+    .action-text { font-size: .86rem; color: var(--text); line-height: 1.5; }
 
-      <section class="operator-card">
-        <div class="panel-head">
-          <h3>Immediate Actions</h3>
-          <span class="badge">Checklist</span>
-        </div>
-        <div id="operator-actions" class="stack compact-stack"></div>
-      </section>
+    .reading-card {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 1rem 1.1rem; margin-bottom: .6rem;
+      position: relative; overflow: hidden;
+    }
+    .reading-card.critical { border-color: rgba(248,113,113,.3); }
+    .reading-card.warning  { border-color: rgba(251,191,36,.25); }
+    .reading-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .6rem; }
+    .reading-device { font-weight: 600; font-size: .9rem; }
+    .reading-time { font-size: .74rem; color: var(--faint); }
+    .reading-temps { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: .5rem; }
+    .reading-temp-val { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .reading-temp-lbl { font-size: .72rem; color: var(--muted); margin-top: .2rem; }
+    .reading-meta { display: flex; gap: .5rem; flex-wrap: wrap; }
 
-      <section class="operator-card">
-        <div class="panel-head">
-          <h3>Latest Telemetry</h3>
-          <span class="badge">Field-ready</span>
-        </div>
-        <div id="operator-telemetry" class="stack"></div>
-      </section>
+    .pulse-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--healthy);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .5; transform: scale(.8); }
+    }
+  </style>
+</head>
+<body data-page="operator">
+<main class="operator-shell">
 
-      <section class="operator-card">
-        <div class="panel-head">
-          <h3>Facility Incidents</h3>
-          <span class="badge danger">Priority</span>
-        </div>
-        <div id="operator-incidents" class="stack"></div>
-      </section>
-    </main>
+  <!-- Header -->
+  <header class="field-header">
+    <div class="field-brand">
+      <div class="field-logo">❄</div>
+      <div>
+        <div class="field-title">{{ app_name }}</div>
+        <div class="field-sub">Field Operator View</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;align-items:center">
+      <div class="pulse-dot" id="live-dot"></div>
+      <button class="btn-ghost btn-sm" id="go-dashboard">Dashboard</button>
+      <button class="btn-danger btn-sm" id="logout-btn">Out</button>
+    </div>
+  </header>
 
-    <script src="/static/common.js"></script>
-    <script src="/static/operator.js"></script>
-  </body>
+  <!-- User identity card -->
+  <div class="user-card">
+    <div class="user-card-name" id="op-name">Loading…</div>
+    <div class="user-card-role" id="op-role"></div>
+    <div class="user-card-grid">
+      <div class="user-card-stat">
+        <div class="user-card-stat-val" id="op-open-incidents">—</div>
+        <div class="user-card-stat-lbl">Open Incidents</div>
+      </div>
+      <div class="user-card-stat">
+        <div class="user-card-stat-val" id="op-facility">—</div>
+        <div class="user-card-stat-lbl">Assigned Facility</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Immediate action queue -->
+  <div class="section-label">Immediate Action Checklist</div>
+  <div id="op-actions" style="margin-bottom:1rem"></div>
+
+  <!-- Live sensor readings -->
+  <div class="section-label">Live Sensor Readings</div>
+  <div id="op-telemetry" style="margin-bottom:1rem"></div>
+
+  <!-- Active incidents -->
+  <div class="section-label">Active Incidents</div>
+  <div id="op-incidents" style="margin-bottom:1rem"></div>
+
+  <!-- DC Layer 2 status: gateway buffer -->
+  <div class="section-label">Gateway Buffer Status</div>
+  <div id="op-gateways" style="margin-bottom:1.5rem"></div>
+
+</main>
+<script src="/static/common.js"></script>
+<script src="/static/operator.js"></script>
+</body>
 </html>
