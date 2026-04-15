@@ -380,7 +380,7 @@ def build_overview(connection: sqlite3.Connection, user: dict | None = None) -> 
 
     facility_health = [
         dict(r) for r in connection.execute(
-            """SELECT f.id, f.name, f.status, f.region, f.latitude, f.longitude, COUNT(d.id) AS device_count,
+            """SELECT f.id, f.name, f.status, f.region, f.facility_type, f.latitude, f.longitude, COUNT(d.id) AS device_count,
                COALESCE(g.status, 'unknown') AS gateway_status
                FROM facilities f
                LEFT JOIN devices d ON d.facility_id = f.id
@@ -507,7 +507,7 @@ def list_vaccines(connection: sqlite3.Connection) -> list[dict]:
 
 def list_gateways(connection: sqlite3.Connection) -> list[dict]:
     return [dict(r) for r in connection.execute(
-        "SELECT g.*, f.name AS facility_name FROM gateways g JOIN facilities f ON f.id = g.facility_id ORDER BY g.id"
+        "SELECT g.*, f.name AS facility_name, f.facility_type FROM gateways g JOIN facilities f ON f.id = g.facility_id ORDER BY g.id"
     ).fetchall()]
 
 
@@ -575,6 +575,13 @@ def build_analytics(connection: sqlite3.Connection, user: dict | None = None) ->
         "delivery_channels": delivery_channels,
         "transit_locations": list_transit_locations(connection, user=user),
     }
+
+
+def list_audit_log(connection: sqlite3.Connection, limit: int = 20) -> list[dict]:
+    return [dict(r) for r in connection.execute(
+        "SELECT id, entity_type, entity_id, action, payload, previous_hash, entry_hash, created_at FROM audit_log ORDER BY created_at DESC LIMIT ?",
+        (limit,),
+    ).fetchall()]
 
 
 def build_summary_export_rows(connection: sqlite3.Connection, user: dict | None = None) -> list[dict]:

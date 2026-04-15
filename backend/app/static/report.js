@@ -4,9 +4,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   requireSession();
   document.getElementById("go-dashboard").addEventListener("click", () => window.location.href = "/");
 
-  const [analytics, dcEvents] = await Promise.all([
+  const [analytics, auditEntries] = await Promise.all([
     fetchJson("/api/reports/analytics"),
-    fetchJson("/api/dc-events?limit=50"),
+    fetchJson("/api/audit-log?limit=20"),
   ]);
 
   const kpis = analytics.kpis;
@@ -42,11 +42,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
+      animation: { duration: 0 },
       plugins: { legend: { labels: { color: "#7aacb8", font: { size: 11 } } } },
       scales: {
         x: { ticks: { color: "#3d6a78", font: { size: 10 } }, grid: { color: "rgba(255,255,255,.03)" } },
         y:  { ticks: { color: "#3d6a78", font: { size: 10 } }, grid: { color: "rgba(255,255,255,.04)" }, title: { display: true, text: "Excursions", color: "#3d6a78", font: { size: 10 } } },
-        y2: { position: "right", ticks: { color: "#3d6a78", font: { size: 10 } }, grid: { drawOnChartArea: false }, title: { display: true, text: "Avg Temp °C", color: "#3d6a78", font: { size: 10 } } },
+        y2: { position: "right", ticks: { color: "#3d6a78", font: { size: 10 } }, grid: { drawOnChartArea: false }, title: { display: true, text: "Avg Temp \u00b0C", color: "#3d6a78", font: { size: 10 } } },
       },
     },
   });
@@ -67,6 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: "58%",
+      animation: { duration: 0 },
       plugins: {
         legend: { position: "bottom", labels: { color: "#7aacb8", font: { size: 11 }, padding: 12 } },
       },
@@ -120,37 +122,37 @@ document.addEventListener("DOMContentLoaded", async () => {
       }).join("")
     : `<tr><td colspan="4" class="empty-state" style="text-align:center;padding:1rem">No telemetry yet</td></tr>`;
 
-  // ── Audit chain excerpt ─────────────────────────────────────
-  // We'll use the dc_events as a proxy for the audit chain display
+  // ── Audit chain — real SHA-256 hash-linked entries ─────────
   const auditEl = document.getElementById("report-audit");
-  if (dcEvents && dcEvents.length > 0) {
-    auditEl.innerHTML = `
-      <table>
-        <thead><tr>
-          <th>Event Type</th><th>Node</th><th>Description</th><th>Occurred At</th>
-        </tr></thead>
-        <tbody>
-          ${dcEvents.slice(0, 12).map(ev => `
-            <tr>
-              <td><span class="chip ${
-                ev.event_type === "incident_opened" ? "critical"
-                : ev.event_type === "incident_resolved" ? "healthy"
-                : ev.event_type === "alert_multicast" ? "warning"
-                : "neutral"
-              }">${ev.event_type.replace(/_/g," ")}</span></td>
-              <td style="font-family:monospace;font-size:.78rem;color:var(--accent)">${ev.node_id}</td>
-              <td style="font-size:.82rem">${ev.description}</td>
-              <td class="ts">${formatTime(ev.occurred_at)}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-      <p style="font-size:.75rem;color:var(--faint);margin-top:.75rem">
-        ↑ Each event is logged with a SHA-256 hash chain in audit_log. Previous hash is embedded in each entry — tamper-evident.
-      </p>
-    `;
+  if (auditEntries && auditEntries.length > 0) {
+    auditEl.innerHTML =
+      '<table>'
+      + '<thead><tr>'
+      + '<th>Action</th><th>Entity</th><th>Entry Hash (SHA-256)</th><th>Prev Hash</th><th>Time</th>'
+      + '</tr></thead>'
+      + '<tbody>'
+      + auditEntries.slice(0, 15).map(e => {
+          const hashShort = e.entry_hash ? e.entry_hash.slice(0, 16) + "\u2026" : "\u2014";
+          const prevShort = e.previous_hash ? e.previous_hash.slice(0, 12) + "\u2026" : "\u2014";
+          const cls = e.action === "opened" ? "critical"
+                    : e.action === "resolved" ? "healthy"
+                    : e.action === "login" ? "info"
+                    : "neutral";
+          return '<tr>'
+            + '<td><span class="chip ' + cls + '">' + e.action + '</span></td>'
+            + '<td style="font-size:.78rem;color:var(--muted)">' + e.entity_type + ' / ' + e.entity_id.slice(0,20) + '</td>'
+            + '<td style="font-family:monospace;font-size:.72rem;color:var(--accent)">' + hashShort + '</td>'
+            + '<td style="font-family:monospace;font-size:.72rem;color:var(--faint)">' + prevShort + '</td>'
+            + '<td class="ts">' + formatTime(e.created_at) + '</td>'
+            + '</tr>';
+        }).join("")
+      + '</tbody></table>'
+      + '<p style="font-size:.75rem;color:var(--faint);margin-top:.75rem">'
+      + '\u2191 SHA-256 hash chain: each entry embeds previous entry\'s hash. Any tampering breaks the chain. '
+      + auditEntries.length + ' entries shown (most recent first).'
+      + '</p>';
   } else {
-    auditEl.innerHTML = `<p class="empty-state">Audit entries appear after system events. Start the simulator to generate data.</p>`;
+    auditEl.innerHTML = '<p class="empty-state">Audit entries appear after system events. Start the simulator to generate data.</p>';
   }
 });
 

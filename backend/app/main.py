@@ -13,9 +13,9 @@ from .database import get_connection, get_db_path, init_db
 from .schemas import LoginRequest, TelemetryIn
 from .services import (build_analytics, build_incident_export_rows, build_overview,
                        build_summary_export_rows, create_audit_entry, insert_telemetry,
-                       list_batches, list_dc_events, list_gateways, list_incidents,
-                       list_notifications, list_recent_telemetry, list_transit_locations,
-                       list_vaccines, now_iso, seed_reference_data)
+                       list_audit_log, list_batches, list_dc_events, list_gateways,
+                       list_incidents, list_notifications, list_recent_telemetry,
+                       list_transit_locations, list_vaccines, now_iso, seed_reference_data)
 
 app = FastAPI(title=settings.app_name, version="0.3.0",
               summary="Distributed vaccine cold chain monitoring platform.")
@@ -177,6 +177,12 @@ def dc_events(limit: int = Query(default=30, ge=1, le=100), payload: dict = AUTH
 def report_analytics(payload: dict = AUTH_ALL):
     con = get_connection()
     try: return build_analytics(con, user=payload)
+    finally: con.close()
+
+@app.get("/api/audit-log")
+def audit_log_entries(limit: int = Query(default=20, ge=1, le=50), payload: dict = AUTH_MGR):
+    con = get_connection()
+    try: return list_audit_log(con, limit=limit)
     finally: con.close()
 
 @app.get("/api/reports/export/summary.csv")

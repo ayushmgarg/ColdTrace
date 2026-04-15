@@ -93,16 +93,24 @@
         <div class="dc-concept-item-desc">LTAT → IGD → Cloud → Dashboard. Each layer is client to the next.</div>
       </div>
       <div class="dc-concept-item">
+        <div class="dc-concept-item-name">Gateway Types</div>
+        <div class="dc-concept-item-desc">IGD (storage hub), CCVE (vehicle + GPS/Beidou), CCIE (portable incubator) — all with store-and-forward.</div>
+      </div>
+      <div class="dc-concept-item">
         <div class="dc-concept-item-name">Fault Tolerance</div>
-        <div class="dc-concept-item-desc">Store-and-forward SQLite buffer in gateway. 5 redundant sensors per LTAT.</div>
+        <div class="dc-concept-item-desc">Store-and-forward SQLite buffer in gateway. 5 redundant TMP112 sensors per LTAT device.</div>
       </div>
       <div class="dc-concept-item">
         <div class="dc-concept-item-name">Message Persistence</div>
-        <div class="dc-concept-item-desc">Gateway buffers packets during outages; flushes when cloud reconnects.</div>
+        <div class="dc-concept-item-desc">Gateway buffers packets during outages; flush-on-reconnect restores data to cloud without loss.</div>
+      </div>
+      <div class="dc-concept-item">
+        <div class="dc-concept-item-name">Alert Engine (24/7)</div>
+        <div class="dc-concept-item-desc">Runs at cloud level — guarantees alerts even without active user. Rolling avg + linear regression detect excursions.</div>
       </div>
       <div class="dc-concept-item">
         <div class="dc-concept-item-name">Reliable Multicast</div>
-        <div class="dc-concept-item-desc">Alert engine broadcasts to all registered managers via SMS + email simultaneously.</div>
+        <div class="dc-concept-item-desc">Alert engine broadcasts to all registered managers simultaneously via SMS (Twilio) + email (SendGrid).</div>
       </div>
       <div class="dc-concept-item">
         <div class="dc-concept-item-name">Clock Synchronisation</div>
@@ -123,17 +131,17 @@
   <div class="section-grid two-col" style="margin-bottom:1rem">
     <div class="panel">
       <div class="panel-head">
-        <span class="panel-title">📊 Compliance Over Time</span>
+        <span class="panel-title">📊 Excursions &amp; Avg Temp per Facility</span>
         <span class="panel-badge">Telemetry analytics</span>
       </div>
-      <canvas id="report-bar-chart" height="200"></canvas>
+      <div class="chart-wrap"><canvas id="report-bar-chart"></canvas></div>
     </div>
     <div class="panel">
       <div class="panel-head">
         <span class="panel-title">🚨 Incident Breakdown</span>
         <span class="panel-badge">By type</span>
       </div>
-      <canvas id="report-inc-chart" height="200"></canvas>
+      <div class="chart-wrap"><canvas id="report-inc-chart"></canvas></div>
     </div>
   </div>
 
