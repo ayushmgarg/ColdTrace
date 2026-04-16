@@ -446,12 +446,112 @@ async function renderMap(cfg, transit) {
   }
 }
 
+// ── Simulation Controls ─────────────────────────────────────
+function simStatus(msg, cls) {
+  const el = document.getElementById("sim-status");
+  if (!el) return;
+  el.className = "sim-status " + (cls || "");
+  el.textContent = msg;
+}
+
+function simBusy(busy) {
+  ["btn-excursion","btn-outage","btn-resolve"].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.disabled = busy;
+  });
+}
+
+async function postAction(url, successMsg) {
+  simStatus("\u23f3 Sending\u2026", "loading");
+  simBusy(true);
+  try {
+    const token = getToken();
+    const res = await fetch(url, {
+      method: "POST",
+      headers: token ? { Authorization: "Bearer " + token } : {},
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || res.statusText);
+    simStatus("\u2713 " + successMsg + " \u2014 " + JSON.stringify(data).slice(0, 120), "ok");
+  } catch (err) {
+    simStatus("\u2717 Error: " + err.message, "err");
+  } finally {
+    simBusy(false);
+  }
+}
+
+async function initSimControls() {
+  // Populate device dropdown
+  const devSel = document.getElementById("sim-device");
+  const gwSel  = document.getElementById("sim-gateway");
+  const incSel = document.getElementById("sim-incident");
+  if (!devSel) return;
+
+  try {
+    const [devices, gateways] = await Promise.all([
+      fetchJson("/api/devices"),
+      fetchJson("/api/gateways"),
+    ]);
+    if (devices) {
+      devSel.innerHTML = devices.map(d =>
+        '<option value="' + d.id + '">' + d.id + ' \u00b7 ' + d.device_type + ' \u00b7 ' + d.facility_name + '</option>'
+      ).join("");
+    }
+    if (gateways) {
+      gwSel.innerHTML = gateways.map(g =>
+        '<option value="' + g.id + '">' + g.id + ' [' + g.status + ']</option>'
+      ).join("");
+    }
+  } catch (e) { /* ignore — controls still work */ }
+
+  // Wire buttons
+  document.getElementById("btn-excursion").addEventListener("click", () => {
+    const deviceId = devSel.value;
+    const tempC    = document.getElementById("sim-temp").value || "10.5";
+    postAction(
+      "/api/simulate/excursion?device_id=" + encodeURIComponent(deviceId) + "&temp_c=" + tempC,
+      "Excursion injected \u2192 incident created"
+    );
+  });
+
+  document.getElementById("btn-outage").addEventListener("click", () => {
+    const gwId = gwSel.value;
+    postAction(
+      "/api/simulate/outage?gateway_id=" + encodeURIComponent(gwId),
+      "Gateway toggled \u2192 buffer updated"
+    );
+  });
+
+  document.getElementById("btn-resolve").addEventListener("click", () => {
+    const incId = incSel.value;
+    if (!incId) { simStatus("\u26a0 No open incident selected", "err"); return; }
+    postAction("/api/incidents/" + encodeURIComponent(incId) + "/resolve", "Incident resolved");
+  });
+}
+
+// Refresh open incidents dropdown each cycle
+function refreshIncidentDropdown(incidents) {
+  const incSel = document.getElementById("sim-incident");
+  if (!incSel) return;
+  const open = (incidents || []).filter(i => i.status === "open");
+  if (!open.length) {
+    incSel.innerHTML = '<option value="">— no open incidents —</option>';
+  } else {
+    incSel.innerHTML = open.map(i =>
+      '<option value="' + i.id + '">' + i.id + ' \u00b7 ' + i.device_id + ' \u00b7 ' + i.severity + '</option>'
+    ).join("");
+  }
+}
+
 // ── Main ────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   requireSession();
 
   document.getElementById("logout-btn").addEventListener("click", logout);
   document.getElementById("go-operator").addEventListener("click", () => window.location.href = "/operator");
+
+  // Init simulation controls once
+  initSimControls();
   document.getElementById("go-report").addEventListener("click", () => window.location.href = "/reports/executive");
   document.getElementById("download-summary").addEventListener("click", () => downloadProtected("/api/reports/export/summary.csv", "coldtrace-summary.csv"));
   document.getElementById("download-incidents").addEventListener("click", () => downloadProtected("/api/reports/export/incidents.csv", "coldtrace-incidents.csv"));
@@ -504,6 +604,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // ── DC event feed ─────────────────────────────────────
       renderDcFeed(dcEvents);
+
+      // ── Sync open incident dropdown in sim controls ───────
+      refreshIncidentDropdown(incidents);
 
       // ── Gateways ──────────────────────────────────────────
       renderGateways(gateways);

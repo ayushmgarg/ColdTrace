@@ -56,6 +56,57 @@
     <div id="arch-diagram" class="arch-diagram"></div>
   </div>
 
+  <!-- Simulation Controls panel -->
+  <div class="section-label">Simulation Controls</div>
+  <div class="panel" id="sim-panel" style="margin-bottom:1rem">
+    <div class="panel-head">
+      <span class="panel-title">⚡ Interactive Controls — Inject Events Live</span>
+      <span class="panel-badge">DC Concept: Fault Injection &amp; Incident Lifecycle</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem">
+
+      <!-- Card 1: Trigger Excursion -->
+      <div class="sim-card">
+        <div class="sim-card-title">🌡️ Trigger Excursion</div>
+        <div class="sim-card-desc">Inject an out-of-range packet → fires Alert Engine</div>
+        <div style="margin:.75rem 0 .5rem">
+          <label class="sim-label">Device</label>
+          <select id="sim-device" class="sim-select"></select>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+          <label class="sim-label" style="margin:0;white-space:nowrap">Temp °C</label>
+          <input id="sim-temp" type="number" class="sim-input" value="10.5" step="0.5" min="-5" max="25"/>
+        </div>
+        <button class="sim-btn sim-btn-fire" id="btn-excursion">🔥 Fire Excursion</button>
+      </div>
+
+      <!-- Card 2: Toggle Gateway Outage -->
+      <div class="sim-card">
+        <div class="sim-card-title">📡 Toggle Gateway Outage</div>
+        <div class="sim-card-desc">Flip gateway online↔degraded → shows store-and-forward buffer</div>
+        <div style="margin:.75rem 0 .75rem">
+          <label class="sim-label">Gateway</label>
+          <select id="sim-gateway" class="sim-select"></select>
+        </div>
+        <button class="sim-btn sim-btn-outage" id="btn-outage">🔄 Toggle Outage</button>
+      </div>
+
+      <!-- Card 3: Resolve Incident -->
+      <div class="sim-card">
+        <div class="sim-card-title">✅ Resolve Incident</div>
+        <div class="sim-card-desc">Manually close an open incident → completes the lifecycle</div>
+        <div style="margin:.75rem 0 .75rem">
+          <label class="sim-label">Open Incident</label>
+          <select id="sim-incident" class="sim-select"></select>
+        </div>
+        <button class="sim-btn sim-btn-resolve" id="btn-resolve">✅ Mark Resolved</button>
+      </div>
+
+    </div>
+    <!-- Status bar -->
+    <div id="sim-status" class="sim-status">● Idle — use controls above to inject events</div>
+  </div>
+
   <!-- Main 2-col grid -->
   <div class="section-grid two-col">
 

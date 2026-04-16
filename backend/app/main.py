@@ -13,9 +13,11 @@ from .database import get_connection, get_db_path, init_db
 from .schemas import LoginRequest, TelemetryIn
 from .services import (build_analytics, build_incident_export_rows, build_overview,
                        build_summary_export_rows, create_audit_entry, insert_telemetry,
-                       list_audit_log, list_batches, list_dc_events, list_gateways,
-                       list_incidents, list_notifications, list_recent_telemetry,
-                       list_transit_locations, list_vaccines, now_iso, seed_reference_data)
+                       list_audit_log, list_batches, list_dc_events, list_devices,
+                       list_gateways, list_incidents, list_notifications,
+                       list_recent_telemetry, list_transit_locations, list_vaccines,
+                       now_iso, resolve_incident_manually, seed_reference_data,
+                       toggle_gateway_outage, trigger_excursion)
 
 app = FastAPI(title=settings.app_name, version="0.3.0",
               summary="Distributed vaccine cold chain monitoring platform.")
@@ -183,6 +185,47 @@ def report_analytics(payload: dict = AUTH_ALL):
 def audit_log_entries(limit: int = Query(default=20, ge=1, le=50), payload: dict = AUTH_MGR):
     con = get_connection()
     try: return list_audit_log(con, limit=limit)
+    finally: con.close()
+
+@app.get("/api/devices")
+def devices_list(payload: dict = AUTH_ALL):
+    con = get_connection()
+    try: return list_devices(con)
+    finally: con.close()
+
+# ── Interactive simulation controls ──────────────────────────
+@app.post("/api/simulate/excursion")
+def sim_excursion(
+    device_id: str = Query(default="LTAT-PUNE-TRUCK-01"),
+    temp_c: float  = Query(default=10.5, ge=-10.0, le=30.0),
+    payload: dict  = AUTH_ALL,
+):
+    con = get_connection()
+    try:
+        return trigger_excursion(con, device_id, temp_c)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    finally: con.close()
+
+@app.post("/api/simulate/outage")
+def sim_outage(
+    gateway_id: str = Query(default="IGD-MUM-01"),
+    payload: dict   = AUTH_ALL,
+):
+    con = get_connection()
+    try:
+        return toggle_gateway_outage(con, gateway_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    finally: con.close()
+
+@app.post("/api/incidents/{incident_id}/resolve")
+def resolve_inc(incident_id: str, payload: dict = AUTH_MGR):
+    con = get_connection()
+    try:
+        return resolve_incident_manually(con, incident_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     finally: con.close()
 
 @app.get("/api/reports/export/summary.csv")

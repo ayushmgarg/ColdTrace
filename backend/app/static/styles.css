@@ -280,6 +280,43 @@ tbody tr:last-child td{border-bottom:0}
   .panel,.kpi-card{background:#fff;border-color:#ddd;color:#111}
 }
 
+/* ── Simulation Controls ── */
+.sim-card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 1rem 1.1rem;
+  display: flex; flex-direction: column;
+}
+.sim-card-title { font-weight: 600; font-size: .9rem; margin-bottom: .2rem; }
+.sim-card-desc  { font-size: .76rem; color: var(--muted); line-height: 1.5; }
+.sim-label { display: block; font-size: .75rem; color: var(--muted); margin-bottom: .3rem; font-weight: 500; }
+.sim-select, .sim-input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: .5rem .75rem;
+  color: var(--text); font-family: inherit; font-size: .84rem;
+  outline: none; transition: border-color .15s;
+}
+.sim-select:focus, .sim-input:focus { border-color: var(--accent-dk); }
+.sim-btn {
+  width: 100%; padding: .55rem; border-radius: var(--radius-sm);
+  font-weight: 600; font-size: .84rem; cursor: pointer;
+  border: 0; font-family: inherit; transition: opacity .15s, transform .1s;
+  margin-top: auto;
+}
+.sim-btn:hover { opacity: .88; transform: translateY(-1px); }
+.sim-btn:active { transform: translateY(0); }
+.sim-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.sim-btn-fire    { background: linear-gradient(135deg,#f87171,#dc2626); color: #fff; }
+.sim-btn-outage  { background: linear-gradient(135deg,#fbbf24,#d97706); color: #111; }
+.sim-btn-resolve { background: linear-gradient(135deg,#34d399,#059669); color: #04131a; }
+.sim-status {
+  margin-top: 1rem; padding: .6rem 1rem; border-radius: var(--radius-sm);
+  background: var(--panel); border: 1px solid var(--border);
+  font-size: .82rem; color: var(--muted); transition: all .3s;
+}
+.sim-status.ok      { color: var(--healthy); border-color: rgba(52,211,153,.3); background: rgba(52,211,153,.06); }
+.sim-status.err     { color: var(--critical); border-color: rgba(248,113,113,.3); background: rgba(248,113,113,.06); }
+.sim-status.loading { color: var(--accent); border-color: rgba(61,214,245,.25); }
+
 /* ── Chart height fix — prevents chart from collapsing on re-render ── */
 .chart-wrap {
   position: relative;

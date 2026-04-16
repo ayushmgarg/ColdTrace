@@ -577,6 +577,94 @@ def build_analytics(connection: sqlite3.Connection, user: dict | None = None) ->
     }
 
 
+def list_devices(connection: sqlite3.Connection) -> list[dict]:
+    return [dict(r) for r in connection.execute(
+        "SELECT d.id, d.facility_id, d.gateway_id, d.device_type, d.status, f.name AS facility_name "
+        "FROM devices d JOIN facilities f ON f.id = d.facility_id ORDER BY d.id"
+    ).fetchall()]
+
+
+def trigger_excursion(connection: sqlite3.Connection, device_id: str, temp_c: float) -> dict:
+    """Inject a synthetic out-of-range telemetry packet for live demo."""
+    device = connection.execute(
+        "SELECT * FROM devices WHERE id = ?", (device_id,)
+    ).fetchone()
+    if not device:
+        raise ValueError(f"Device {device_id} not found")
+
+    # Pull last known context for this device so packet is realistic
+    last = connection.execute(
+        "SELECT batch_id, latitude, longitude, transport_mode, battery_voltage "
+        "FROM telemetry WHERE device_id = ? ORDER BY recorded_at DESC LIMIT 1",
+        (device_id,),
+    ).fetchone()
+
+    pkt = TelemetryIn(
+        packet_id      = f"PKT-DEMO-{uuid.uuid4().hex[:8].upper()}",
+        device_id      = device_id,
+        gateway_id     = device["gateway_id"],
+        facility_id    = device["facility_id"],
+        batch_id       = last["batch_id"] if last else "BATCH-CVX-001",
+        recorded_at    = now_iso(),
+        temperature_c  = round(temp_c, 2),
+        humidity_pct   = 52.0,
+        battery_voltage= float(last["battery_voltage"]) if last else 2.50,
+        latitude       = float(last["latitude"])  if last and last["latitude"]  else None,
+        longitude      = float(last["longitude"]) if last and last["longitude"] else None,
+        transport_mode = last["transport_mode"] if last else "storage",
+    )
+    return insert_telemetry(connection, pkt)
+
+
+def toggle_gateway_outage(connection: sqlite3.Connection, gateway_id: str) -> dict:
+    """Toggle a gateway between online and degraded for store-and-forward demo."""
+    gw = connection.execute("SELECT * FROM gateways WHERE id = ?", (gateway_id,)).fetchone()
+    if not gw:
+        raise ValueError(f"Gateway {gateway_id} not found")
+
+    if gw["status"] == "online":
+        new_status = "degraded"
+        new_buf    = gw["buffered_packets"] + 8      # simulate packets piling up
+    else:
+        new_status = "online"
+        new_buf    = 0                               # flush on reconnect
+
+    connection.execute(
+        "UPDATE gateways SET status = ?, buffered_packets = ?, last_seen_at = ? WHERE id = ?",
+        (new_status, new_buf, now_iso(), gateway_id),
+    )
+    log_dc_event(
+        connection, "system_boot", gateway_id,
+        f"Gateway {gateway_id} toggled to {new_status} (demo outage simulation)",
+        {"new_status": new_status, "buffered_packets": new_buf},
+    )
+    create_audit_entry(connection, "gateway", gateway_id, "outage_toggle",
+                       {"new_status": new_status, "buffered_packets": new_buf})
+    connection.commit()
+    return {"gateway_id": gateway_id, "new_status": new_status, "buffered_packets": new_buf}
+
+
+def resolve_incident_manually(connection: sqlite3.Connection, incident_id: str) -> dict:
+    """Manually resolve an open incident from the dashboard."""
+    inc = connection.execute(
+        "SELECT * FROM incidents WHERE id = ? AND status = 'open'", (incident_id,)
+    ).fetchone()
+    if not inc:
+        raise ValueError(f"Incident {incident_id} not found or already resolved")
+
+    resolved_at = now_iso()
+    connection.execute(
+        "UPDATE incidents SET status = 'resolved', resolved_at = ? WHERE id = ?",
+        (resolved_at, incident_id),
+    )
+    create_audit_entry(connection, "incident", incident_id, "resolved",
+                       {"manually_resolved": True, "resolved_at": resolved_at})
+    log_dc_event(connection, "incident_resolved", inc["device_id"],
+                 f"Incident {incident_id} manually resolved via dashboard")
+    connection.commit()
+    return {"incident_id": incident_id, "status": "resolved", "resolved_at": resolved_at}
+
+
 def list_audit_log(connection: sqlite3.Connection, limit: int = 20) -> list[dict]:
     return [dict(r) for r in connection.execute(
         "SELECT id, entity_type, entity_id, action, payload, previous_hash, entry_hash, created_at FROM audit_log ORDER BY created_at DESC LIMIT ?",
