@@ -274,6 +274,9 @@ def evaluate_reading(connection: sqlite3.Connection, reading: TelemetryIn) -> di
     device = connection.execute(
         "SELECT min_temp_c, max_temp_c FROM devices WHERE id = ?", (reading.device_id,),
     ).fetchone()
+    if device is None:
+        # Unknown / virtual device — store packet but skip threshold evaluation
+        return {"incident_type": None, "rolling_average_c": reading.temperature_c, "trend_slope": 0.0}
     window_start = (parse_iso(reading.recorded_at) - timedelta(minutes=30)).isoformat()
     history = connection.execute(
         "SELECT recorded_at, temperature_c FROM telemetry WHERE device_id = ? AND recorded_at >= ? ORDER BY recorded_at ASC",
