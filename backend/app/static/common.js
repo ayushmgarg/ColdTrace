@@ -63,6 +63,45 @@ function batteryTone(v) {
   return "healthy";
 }
 
+/* ── Theme toggle (persisted in localStorage) ────────────── */
+const THEME_KEY = "ct_theme";
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY) || "dark";
+  document.documentElement.setAttribute("data-theme", saved);
+  document.addEventListener("DOMContentLoaded", () => _syncThemeButtons(saved));
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
+  const next = current === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem(THEME_KEY, next);
+  _syncThemeButtons(next);
+  window.dispatchEvent(new CustomEvent("themechange", { detail: { theme: next } }));
+}
+
+function _syncThemeButtons(theme) {
+  document.querySelectorAll(".theme-toggle").forEach(btn => {
+    btn.textContent = theme === "light" ? "🌙 Dark" : "☀️ Light";
+  });
+}
+
+function getChartColors() {
+  const light = document.documentElement.getAttribute("data-theme") === "light";
+  return {
+    legend:    light ? "#25606f" : "#7aacb8",
+    tick:      light ? "#518696" : "#3d6a78",
+    grid:      light ? "rgba(0,0,0,.07)"  : "rgba(255,255,255,.04)",
+    gridFaint: light ? "rgba(0,0,0,.05)"  : "rgba(255,255,255,.03)",
+    donutBg:   light ? "rgba(0,0,0,.07)"  : "rgba(255,255,255,.05)",
+    centerSub: light ? "#518696" : "#3d6a78",
+  };
+}
+
+// Apply immediately — before DOMContentLoaded — to prevent flash on load
+initTheme();
+
 async function ensureMapbox(cfg) {
   return new Promise((resolve, reject) => {
     if (window.mapboxgl) { resolve(window.mapboxgl); return; }

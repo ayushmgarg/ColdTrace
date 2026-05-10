@@ -1,5 +1,8 @@
 /* report.js — executive report + viva evidence page */
 
+let barChart = null;
+let incChart = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
   requireSession();
   document.getElementById("go-dashboard").addEventListener("click", () => window.location.href = "/");
@@ -28,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ── Bar chart: compliance vs excursions per facility ───────
   const facPerf = analytics.facility_performance || [];
   const barCtx  = document.getElementById("report-bar-chart").getContext("2d");
-  new Chart(barCtx, {
+  barChart = new Chart(barCtx, {
     type: "bar",
     data: {
       labels: facPerf.map(f => f.facility_name.replace(" Cold Hub","").replace(" Transit","").replace(" Clinic","")),
@@ -43,18 +46,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     options: {
       responsive: true, maintainAspectRatio: false,
       animation: { duration: 0 },
-      plugins: { legend: { labels: { color: "#7aacb8", font: { size: 11 } } } },
+      plugins: { legend: { labels: { color: getChartColors().legend, font: { size: 11 } } } },
       scales: {
-        x: { ticks: { color: "#3d6a78", font: { size: 10 } }, grid: { color: "rgba(255,255,255,.03)" } },
-        y:  { ticks: { color: "#3d6a78", font: { size: 10 } }, grid: { color: "rgba(255,255,255,.04)" }, title: { display: true, text: "Excursions", color: "#3d6a78", font: { size: 10 } } },
-        y2: { position: "right", ticks: { color: "#3d6a78", font: { size: 10 } }, grid: { drawOnChartArea: false }, title: { display: true, text: "Avg Temp \u00b0C", color: "#3d6a78", font: { size: 10 } } },
+        x: { ticks: { color: getChartColors().tick, font: { size: 10 } }, grid: { color: getChartColors().gridFaint } },
+        y:  { ticks: { color: getChartColors().tick, font: { size: 10 } }, grid: { color: getChartColors().grid }, title: { display: true, text: "Excursions", color: getChartColors().tick, font: { size: 10 } } },
+        y2: { position: "right", ticks: { color: getChartColors().tick, font: { size: 10 } }, grid: { drawOnChartArea: false }, title: { display: true, text: "Avg Temp \u00b0C", color: getChartColors().tick, font: { size: 10 } } },
       },
     },
   });
 
   // ── Doughnut: incident type breakdown ──────────────────────
   const incCtx = document.getElementById("report-inc-chart").getContext("2d");
-  new Chart(incCtx, {
+  incChart = new Chart(incCtx, {
     type: "doughnut",
     data: {
       labels: ["Temp Excursions", "Battery Events", "Resolved"],
@@ -70,7 +73,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       responsive: true, maintainAspectRatio: false, cutout: "58%",
       animation: { duration: 0 },
       plugins: {
-        legend: { position: "bottom", labels: { color: "#7aacb8", font: { size: 11 }, padding: 12 } },
+        legend: { position: "bottom", labels: { color: getChartColors().legend, font: { size: 11 }, padding: 12 } },
       },
     },
   });
@@ -164,3 +167,23 @@ function kpiCard(label, value, sub, icon = "", cls = "") {
     <div class="kpi-sub">${sub}</div>
   </div>`;
 }
+
+// ── Theme change — live-update report chart colors ────────────
+window.addEventListener("themechange", () => {
+  const c = getChartColors();
+  if (barChart) {
+    barChart.options.plugins.legend.labels.color       = c.legend;
+    barChart.options.scales.x.ticks.color             = c.tick;
+    barChart.options.scales.x.grid.color              = c.gridFaint;
+    barChart.options.scales.y.ticks.color             = c.tick;
+    barChart.options.scales.y.grid.color              = c.grid;
+    barChart.options.scales.y.title.color             = c.tick;
+    barChart.options.scales.y2.ticks.color            = c.tick;
+    barChart.options.scales.y2.title.color            = c.tick;
+    barChart.update();
+  }
+  if (incChart) {
+    incChart.options.plugins.legend.labels.color = c.legend;
+    incChart.update();
+  }
+});

@@ -216,18 +216,18 @@ function renderTempChart(recentPoints) {
       maintainAspectRatio: false,
       animation: { duration: 0 },
       plugins: {
-        legend: { labels: { color: "#7aacb8", font: { size: 11 } } },
+        legend: { labels: { color: getChartColors().legend, font: { size: 11 } } },
         tooltip: { mode: "index", intersect: false },
       },
       scales: {
         x: {
-          ticks: { color: "#3d6a78", maxTicksLimit: 6, font: { size: 10 } },
-          grid: { color: "rgba(255,255,255,.03)" },
+          ticks: { color: getChartColors().tick, maxTicksLimit: 6, font: { size: 10 } },
+          grid: { color: getChartColors().gridFaint },
         },
         y: {
           min: 0, max: 12,
-          ticks: { color: "#3d6a78", font: { size: 10 } },
-          grid: { color: "rgba(255,255,255,.04)" },
+          ticks: { color: getChartColors().tick, font: { size: 10 } },
+          grid: { color: getChartColors().grid },
         },
       },
     },
@@ -243,7 +243,7 @@ function renderComplianceChart(kpis) {
 
   if (complianceChart) {
     complianceChart.data.datasets[0].data = [rate, 100 - rate];
-    complianceChart.data.datasets[0].backgroundColor = [color, "rgba(255,255,255,.05)"];
+    complianceChart.data.datasets[0].backgroundColor = [color, getChartColors().donutBg];
     complianceChart.update("none");
     return;
   }
@@ -255,7 +255,7 @@ function renderComplianceChart(kpis) {
       labels: ["Compliant", "Non-compliant"],
       datasets: [{
         data: [rate, 100 - rate],
-        backgroundColor: [color, "rgba(255,255,255,.05)"],
+        backgroundColor: [color, getChartColors().donutBg],
         borderColor: "transparent",
         borderWidth: 0,
         hoverOffset: 4,
@@ -281,7 +281,7 @@ function renderComplianceChart(kpis) {
         c.textBaseline = "middle";
         c.fillText(rate.toFixed(0) + "%", left + width / 2, top + height / 2 - 7);
         c.font = "10px Inter, sans-serif";
-        c.fillStyle = "#3d6a78";
+        c.fillStyle = getChartColors().centerSub;
         c.fillText("compliant", left + width / 2, top + height / 2 + 10);
         c.restore();
       },
@@ -391,17 +391,17 @@ async function renderMap(cfg, transit) {
     if (mapStatus) mapStatus.textContent = "SVG fallback \u2014 add MAPBOX_ACCESS_TOKEN in .env for live map.";
     const pts = transit.filter(t => t.latitude && t.longitude);
     mapEl.innerHTML = '<svg viewBox="0 0 400 240" width="100%" style="display:block">'
-      + '<rect width="400" height="240" fill="#0b1a22" rx="8"/>'
-      + '<text x="200" y="18" fill="#3d6a78" text-anchor="middle" font-size="10" font-family="Inter,sans-serif">Maharashtra Cold Chain \u2014 CCVE Transit Assets</text>'
+      + '<rect width="400" height="240" style="fill:var(--bg)" rx="8"/>'
+      + '<text x="200" y="18" style="fill:var(--muted)" text-anchor="middle" font-size="10" font-family="Inter,sans-serif">Maharashtra Cold Chain \u2014 CCVE Transit Assets</text>'
       + pts.map(t => {
           const x = Math.round(((t.longitude - 72.5) / 5.0) * 360 + 20);
           const y = Math.round(((21.5 - t.latitude)  / 5.5) * 200 + 20);
           const c = tempTone(t.temperature_c) === "critical" ? "#f87171" : "#3dd6f5";
           return '<circle cx="' + x + '" cy="' + y + '" r="6" fill="' + c + '" opacity=".85"/>'
-            + '<text x="' + x + '" y="' + (y+16) + '" fill="#7aacb8" text-anchor="middle" font-size="8" font-family="Inter,sans-serif">'
+            + '<text x="' + x + '" y="' + (y+16) + '" style="fill:var(--faint)" text-anchor="middle" font-size="8" font-family="Inter,sans-serif">'
             + t.device_id.replace("LTAT-","") + '</text>';
         }).join("")
-      + (!pts.length ? '<text x="200" y="125" fill="#3d6a78" text-anchor="middle" font-size="12" font-family="Inter,sans-serif">No transit assets online yet</text>' : "")
+      + (!pts.length ? '<text x="200" y="125" style="fill:var(--muted)" text-anchor="middle" font-size="12" font-family="Inter,sans-serif">No transit assets online yet</text>' : "")
       + '</svg>';
     return;
   }
@@ -720,3 +720,22 @@ function kpiCard(label, value, sub, icon, cls) {
     + '<div class="kpi-sub">' + sub + '</div>'
     + '</div>';
 }
+
+// ── Theme change — live-update Chart.js colors ───────────────
+window.addEventListener("themechange", () => {
+  const c = getChartColors();
+  if (tempChart) {
+    tempChart.options.plugins.legend.labels.color        = c.legend;
+    tempChart.options.scales.x.ticks.color              = c.tick;
+    tempChart.options.scales.x.grid.color               = c.gridFaint;
+    tempChart.options.scales.y.ticks.color              = c.tick;
+    tempChart.options.scales.y.grid.color               = c.grid;
+    tempChart.update();
+  }
+  if (complianceChart) {
+    // donut background segment adapts; signal arc stays as-is (semantic color)
+    const ds = complianceChart.data.datasets[0];
+    ds.backgroundColor = [ds.backgroundColor[0], c.donutBg];
+    complianceChart.update();
+  }
+});
